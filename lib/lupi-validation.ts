@@ -1,32 +1,32 @@
 import { useCallback, useEffect, useState } from 'react';
 import { browserStorage } from './lupi.storage';
 
-type Listener<T> = (value: T | undefined) => void;
-type Updater<T> = (prevState: T | undefined) => T;
-type SetState<T> = (updater: Updater<T | undefined>) => void;
+type Listener<T> = (value: T) => void;
+type Updater<T> = (prevState: T) => T;
+type SetState<T> = (updater: Updater<T> | Partial<T>) => void;
 type Unsubscribe = () => void;
 
-type ValidatorFn<T> = (state: T | undefined) => string[];
+type ValidatorFn<T> = (state: T) => string[];
 
 interface StoreOptions<T> {
   storageKey?: string;
-  validators: ValidatorFn<T>[];
+  validators?: ValidatorFn<T>[];
 }
 
 class Store<T> {
-  private state: T | undefined;
+  private state: T;
   private listeners: Set<Listener<T>>;
   private storageKey?: string;
   private debounceTimeout: ReturnType<typeof setTimeout> | null = null;
   private debounceDelayInMs = 300;
 
-  constructor(initialState?: T, storageKey?: string) {
+  constructor(initialState: T, storageKey?: string) {
     this.storageKey = storageKey;
     this.state = this._loadState(initialState);
     this.listeners = new Set();
   }
 
-  private _loadState(initialState?: T): T | undefined {
+  private _loadState(initialState: T): T {
     if (!this.storageKey) return initialState;
     const savedState = browserStorage.get<T>(this.storageKey);
     // TODO: Add runtime validation here
@@ -45,22 +45,28 @@ class Store<T> {
     }, this.debounceDelayInMs);
   }
 
-  subscribe(callback: Listener<T | undefined>): Unsubscribe {
+  subscribe(callback: Listener<T>): Unsubscribe {
     this.listeners.add(callback);
     return () => this.listeners.delete(callback);
   }
 
-  update(updater: Updater<T | undefined>): void {
+  update(updater: Updater<T>): void {
     this.state = updater(this.state);
     this._persistState();
     this.listeners.forEach((callback) => callback(this.state));
   }
 
-  getState(): T | undefined {
+  set(newState: Partial<T>): void {
+    this.state = { ...this.state, ...newState };
+    this._persistState();
+    this.listeners.forEach((callback) => callback(this.state));
+  }
+
+  getState(): T {
     return this.state;
   }
 
-  reset(initialState?: T): void {
+  reset(initialState: T): void {
     this.state = initialState;
     this._persistState();
     this.listeners.forEach((callback) => callback(this.state));
@@ -71,7 +77,7 @@ export function createStore<T>(initialState: T, options?: StoreOptions<T>) {
   return new Store<T>(initialState, options?.storageKey);
 }
 
-type StoreHookOutput<T> = [T | undefined, SetState<T>];
+type StoreHookOutput<T> = [T, SetState<T>];
 
 export function useStore<T>(store: Store<T>): StoreHookOutput<T> {
   const [value, setValue] = useState(store.getState());
@@ -83,12 +89,16 @@ export function useStore<T>(store: Store<T>): StoreHookOutput<T> {
     return unsubscribe;
   }, [store, stableSetValue]);
 
-  // TODO: set ser parcial
-
   return [
     value,
     // TODO: test performance of useCallback
-    (updater: Updater<T | undefined>) => store.update(updater),
+    (updater) => {
+      if (typeof updater === 'function') {
+        store.update(updater as Updater<T>);
+      } else {
+        store.set(updater as Partial<T>);
+      }
+    },
   ];
 }
 

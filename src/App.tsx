@@ -1,17 +1,21 @@
-import { createStore, useStore } from '../lib/lupi';
+import { createStoreHook } from '../lib/lupi-validation';
 import './App.css';
 import reactLogo from './assets/react.svg';
-// import { counterStore } from './stores';
 import viteLogo from '/vite.svg';
 
-const myStore = createStore({ count: 0 });
+const useCounter = createStoreHook(
+  { count: 0, isOdd: true },
+  {
+    storageKey: 'counter_store',
+  },
+);
 
 function MyChildComponent() {
-  const [counter, setCount] = useStore(myStore);
+  const [counter, setCount] = useCounter();
 
   return (
     <div>
-      <button onClick={() => setCount((p) => ({ count: p.count + 1 }))}>
+      <button onClick={() => setCount((p) => ({ ...p, count: p.count + 1 }))}>
         count is {counter.count}
       </button>
     </div>
@@ -19,8 +23,7 @@ function MyChildComponent() {
 }
 
 function App() {
-  // const [count, setCount] = useState(0)
-  const [counter, setCount] = useStore(myStore);
+  const [counter, setCount] = useCounter();
 
   return (
     <>
@@ -34,7 +37,14 @@ function App() {
       </div>
       <h1>Vite + React</h1>
       <div className="card">
-        <button onClick={() => setCount((p) => ({ count: p.count + 1 }))}>
+        <button
+          onClick={() =>
+            setCount({
+              count: counter.count + 1,
+              isOdd: counter.count % 2 !== 0,
+            })
+          }
+        >
           count is {counter.count}
         </button>
         <p>
