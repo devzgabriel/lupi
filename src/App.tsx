@@ -1,9 +1,9 @@
 import { createStore, useStore } from '../lib/lupi';
 import './App.css';
 import reactLogo from './assets/react.svg';
+// import { counterStore } from './stores';
 import viteLogo from '/vite.svg';
 
-// const myStore = createStore({ count: 0, isOdd: true });
 const myStore = createStore({ count: 0 });
 
 function MyChildComponent() {
