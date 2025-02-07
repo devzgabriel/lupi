@@ -1,53 +1,70 @@
-# React + TypeScript + Vite
+# Lupi: State management as easy as possible
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Lupi is a state management library that is designed to be as easy to use as possible.
 
-Currently, two official plugins are available:
+## Features
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- **Ready-to-use Hook**: Lupi has a ready-to-use hook that you can use to create a store in your React components.
+- **Type-safe**: Lupi is written in TypeScript, so you can be sure that your store is type-safe.
+- **Persistency**: Lupi can persist your store in the browser's local storage automatically if you provide a `storageKey` option.
 
-## Expanding the ESLint configuration
+## WIP Features
 
-If you are developing a production application, we recommend updating the configuration to enable type aware lint rules:
+- **Validation**: Lupi will have a validation feature that allows you to validate the store's state.
 
-- Configure the top-level `parserOptions` property like this:
+## Installation
 
-```js
-export default tseslint.config({
-  languageOptions: {
-    // other options...
-    parserOptions: {
-      project: ['./tsconfig.node.json', './tsconfig.app.json'],
-      tsconfigRootDir: import.meta.dirname,
-    },
-  },
-});
+You can install Lupi using npm:
+
+```bash
+npm install lupi
 ```
 
-- Replace `tseslint.configs.recommended` to `tseslint.configs.recommendedTypeChecked` or `tseslint.configs.strictTypeChecked`
-- Optionally add `...tseslint.configs.stylisticTypeChecked`
-- Install [eslint-plugin-react](https://github.com/jsx-eslint/eslint-plugin-react) and update the config:
+or using yarn:
 
-```js
-// eslint.config.js
-import react from 'eslint-plugin-react';
-
-export default tseslint.config({
-  // Set the react version
-  settings: { react: { version: '18.3' } },
-  plugins: {
-    // Add the react plugin
-    react,
-  },
-  rules: {
-    // other rules...
-    // Enable its recommended rules
-    ...react.configs.recommended.rules,
-    ...react.configs['jsx-runtime'].rules,
-  },
-});
+```bash
+yarn add lupi
 ```
 
-Ref:
-https://dev.to/receter/how-to-create-a-react-component-library-using-vites-library-mode-4lma
+## Example Usage
+
+Here is an example of how to use the `createStoreHook` from the `lupi` library in a React component:
+
+```tsx
+import { createStoreHook } from 'lupi';
+import './App.css';
+
+const useCounter = createStoreHook({ count: 0 });
+
+function MyChildComponent() {
+  const [counter, setCount] = useCounter();
+
+  return (
+    <button onClick={() => setCount({ count: counter.count + 1 })}>count is {counter.count}</button>
+  );
+}
+
+function AnotherChildComponent() {
+  const [counter, setCount] = useCounter();
+
+  return (
+    <button onClick={() => setCount({ count: counter.count - 1 })}>count is {counter.count}</button>
+  );
+}
+
+function App() {
+  const [counter] = useCounter();
+
+  return (
+    <div>
+      <h1>Simple Counter</h1>
+      <p>Count is {counter.count}</p>
+
+      <MyChildComponent />
+      <AnotherChildComponent />
+    </div>
+  );
+}
+
+export default App;
+```
