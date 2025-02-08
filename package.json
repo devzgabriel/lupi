@@ -1,11 +1,11 @@
 {
   "name": "lupi",
-  "version": "0.0.2",
+  "version": "0.0.5",
   "description": "State management as easy as possible",
   "license": "MIT",
   "type": "module",
-  "main": "dist/main.js",
-  "types": "dist/main.d.ts",
+  "main": "dist/lupi.js",
+  "types": "dist/index.d.ts",
   "files": [
     "dist"
   ],

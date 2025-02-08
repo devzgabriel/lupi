@@ -1,4 +1,40 @@
 {
-  "files": [],
-  "references": [{ "path": "./tsconfig.app.json" }, { "path": "./tsconfig.node.json" }]
+  "compilerOptions": {
+    // "useDefineForClassFields": true,
+    // "lib": ["ES2020", "DOM", "DOM.Iterable"],
+    // "experimentalDecorators": true,
+    // "emitDecoratorMetadata": true,
+
+    // /* Bundler mode */
+    // "isolatedModules": true,
+    // "moduleDetection": "force",
+
+    // /* Linting */
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true,
+    "noUncheckedSideEffectImports": true,
+
+    "target": "esnext",
+    "strict": true,
+    "jsx": "react-jsx",
+    "esModuleInterop": true,
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "skipLibCheck": true /* FIXME remove this once vite fixes it */,
+    "allowImportingTsExtensions": true,
+    "noUncheckedIndexedAccess": true,
+    "exactOptionalPropertyTypes": true,
+    "verbatimModuleSyntax": true,
+    "declaration": true,
+    "isolatedDeclarations": false,
+    "noEmit": true,
+    "baseUrl": ".",
+    "paths": {
+      "lupi": ["./src/index.ts"],
+      "lupi/*": ["./src/*.ts"]
+    }
+  },
+  "include": ["src"],
+  "exclude": ["node_modules", "dist"]
 }

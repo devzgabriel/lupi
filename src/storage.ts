@@ -1,4 +1,4 @@
-export type LocalStorageKey = string;
+type LocalStorageKey = string;
 
 class Storage {
   get<T>(key: LocalStorageKey): T | null {
@@ -24,9 +24,9 @@ class Storage {
     }
   }
 
-  set<T>(key: LocalStorageKey, value: T) {
+  set<T>(key: LocalStorageKey, value: T): void {
     if (!key || typeof window === 'undefined' || typeof localStorage === 'undefined') {
-      return null;
+      return;
     }
 
     try {
@@ -41,9 +41,9 @@ class Storage {
     }
   }
 
-  del(key: LocalStorageKey) {
+  del(key: LocalStorageKey): void {
     if (!key || typeof window === 'undefined' || typeof localStorage === 'undefined') {
-      return null;
+      return;
     }
 
     try {
@@ -54,4 +54,8 @@ class Storage {
   }
 }
 
-export const browserStorage = new Storage();
+/**
+ * An instance of the Storage class used for browser-based storage operations.
+ * It will only work in the browser environment.
+ */
+export const browserStorage: Storage = new Storage();
