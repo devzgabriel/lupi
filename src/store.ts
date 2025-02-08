@@ -1,46 +1,64 @@
 import { useCallback, useEffect, useState } from 'react';
-import { browserStorage } from './storage';
+import { LupiStorage } from './storage';
 
 type Listener<T> = (value: T) => void;
 type Updater<T> = (prevState: T) => T;
 type SetState<T> = (updater: Updater<T> | Partial<T>) => void;
 type Unsubscribe = () => void;
-
 type ValidatorFn<T> = (state: T) => string[];
 
 interface StoreOptions<T> {
   storageKey?: string;
+  encryptKey?: string;
   validators?: ValidatorFn<T>[];
+}
+
+interface StoreOptionsProps {
+  storageKey?: string | undefined;
+  storage: LupiStorage;
 }
 
 class Store<T> {
   private state: T;
   private listeners: Set<Listener<T>>;
   private storageKey?: string | undefined;
+  private storage: LupiStorage;
   private debounceTimeout: ReturnType<typeof setTimeout> | null = null;
   private debounceDelayInMs = 300;
 
-  constructor(initialState: T, storageKey?: string) {
+  constructor(initialState: T, { storage, storageKey }: StoreOptionsProps) {
+    this.storage = storage;
     this.storageKey = storageKey;
-    this.state = this._loadState(initialState);
+    this.state = initialState;
+
+    this._loadState(initialState).then((state) => {
+      this.state = state;
+      this.listeners.forEach((callback) => callback(this.state));
+    });
+
     this.listeners = new Set();
   }
 
-  private _loadState(initialState: T): T {
+  private async _loadState(initialState: T): Promise<T> {
     if (!this.storageKey) return initialState;
-    const savedState = browserStorage.get<T>(this.storageKey);
+    console.log('Loading state from storage:', this.storage);
+    if (!this.storage) {
+      console.error('No storage instance available');
+      return initialState;
+    }
+    const savedState = await this.storage.get<T>(this.storageKey);
     // TODO: Add runtime validation here
 
     return savedState ?? initialState;
   }
 
-  private _persistState(): void {
+  private async _persistState(): Promise<void> {
     if (this.debounceTimeout) {
       clearTimeout(this.debounceTimeout);
     }
-    this.debounceTimeout = setTimeout(() => {
+    this.debounceTimeout = setTimeout(async () => {
       if (this.storageKey) {
-        browserStorage.set(this.storageKey, JSON.stringify(this.state));
+        await this.storage.set(this.storageKey, this.state);
       }
     }, this.debounceDelayInMs);
   }
@@ -50,15 +68,15 @@ class Store<T> {
     return () => this.listeners.delete(callback);
   }
 
-  update(updater: Updater<T>): void {
+  async update(updater: Updater<T>): Promise<void> {
     this.state = updater(this.state);
-    this._persistState();
+    await this._persistState();
     this.listeners.forEach((callback) => callback(this.state));
   }
 
-  set(newState: Partial<T>): void {
+  async set(newState: Partial<T>): Promise<void> {
     this.state = { ...this.state, ...newState };
-    this._persistState();
+    await this._persistState();
     this.listeners.forEach((callback) => callback(this.state));
   }
 
@@ -66,9 +84,9 @@ class Store<T> {
     return this.state;
   }
 
-  reset(initialState: T): void {
+  async reset(initialState: T): Promise<void> {
     this.state = initialState;
-    this._persistState();
+    await this._persistState();
     this.listeners.forEach((callback) => callback(this.state));
   }
 }
@@ -128,6 +146,10 @@ export function createStore<T>(
   initialState: T,
   options?: StoreOptions<T>,
 ): () => StoreHookOutput<T> {
-  const store = new Store<T>(initialState, options?.storageKey);
+  const storage = new LupiStorage(options?.encryptKey);
+  const store = new Store<T>(initialState, {
+    storage,
+    storageKey: options?.storageKey,
+  });
   return () => useStore(store);
 }
