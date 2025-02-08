@@ -7,6 +7,19 @@ export class LupiStorage {
   constructor(encryptKey?: string) {
     this.encryptKey = encryptKey;
   }
+  // private encryptSync(data: string): string {
+  //   const iv = crypto.getRandomValues(new Uint8Array(12));
+  //   const encoded = new TextEncoder().encode(data);
+
+  //   // Encrypt synchronously using Base64 (not real AES encryption)
+  //   const fakeEncrypted = btoa(String.fromCharCode(...iv) + String.fromCharCode(...encoded));
+  //   return fakeEncrypted;
+  // }
+
+  // private decryptSync(encryptedData: string): string {
+  //   const decoded = atob(encryptedData);
+  //   return decoded.slice(12); // Remove IV part (first 12 bytes)
+  // }
 
   private async getKey() {
     if (this.cachedKey) return this.cachedKey;

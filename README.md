@@ -7,7 +7,7 @@ Lupi is a state management library that is designed to be as easy to use as poss
 - **Ready-to-use Hook**: Lupi has a ready-to-use hook that you can use to create a store in your React components.
 - **Type-safe**: Lupi is written in TypeScript, so you can be sure that your store is type-safe.
 - **Persistency**: Lupi can persist your store in the browser's local storage automatically if you provide a `storageKey` option.
-- **Security**: If you provide a `secret` string, Lupi will encrypt your store before saving it to the local storage.
+- **Security**: If you provide a `encryptKey` string, Lupi will encrypt your store before saving it to the local storage.
 
 ## WIP Features
 
@@ -29,7 +29,7 @@ yarn add lupi
 
 ## Example Usage
 
-Here is an example of how to use the `createStoreHook` from the `lupi` library in a React component:
+Here is an example of how to use the `createStore` from the `lupi` library in a React component:
 
 ```tsx
 import { createStore } from 'lupi';
@@ -64,4 +64,19 @@ function App() {
 }
 
 export default App;
+```
+
+## Options
+
+You can pass an object as the second argument to the `createStore` function to configure the store:
+
+```tsx
+const useCounter = createStore(0, {
+  // The key to save the store in the local storage
+  storageKey: 'counter',
+
+  // The key to encrypt the store, if empty, the data will be saved as plain text
+  // Recommended to use if you want to save sensitive data
+  encryptKey: 'my-secret-key',
+});
 ```
