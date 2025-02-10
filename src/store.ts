@@ -26,6 +26,7 @@ type StoreConstructorProps<T, A extends ActionsDeclaration<T>> = {
 };
 
 class Store<T, A extends ActionsDeclaration<T>> {
+  private initialState: T;
   private state: T;
   actions?: A;
   private listeners: Set<Listener<T>>;
@@ -37,6 +38,7 @@ class Store<T, A extends ActionsDeclaration<T>> {
   constructor(initialState: T, { storage, storageKey, actions }: StoreConstructorProps<T, A>) {
     this.storage = storage;
     this.storageKey = storageKey;
+    this.initialState = initialState;
     this.state = initialState;
     this.actions = actions ?? ({} as A);
 
@@ -92,8 +94,8 @@ class Store<T, A extends ActionsDeclaration<T>> {
     this.listeners.forEach((callback) => callback(this.state));
   }
 
-  async reset(initialState: T): Promise<void> {
-    this.state = initialState;
+  async reset(): Promise<void> {
+    this.state = this.initialState;
     await this._persistState();
     this.listeners.forEach((callback) => callback(this.state));
   }
@@ -115,6 +117,7 @@ class Store<T, A extends ActionsDeclaration<T>> {
 type StoreHookOutput<T, A extends Record<string, ActionFn>> = {
   state: T;
   copyWith: CopyWith<T>;
+  reset: () => void;
   actions: {
     [K in keyof A]: (...args: Parameters<A[K]> extends [T, ...infer P] ? P : never) => void;
   };
@@ -170,6 +173,7 @@ function useStore<T, A extends Record<string, InternalActionFn<T>>>(
       typeof updater === 'function'
         ? store.update(updater as Updater<T>)
         : store.set(updater as Partial<T>),
+    reset: store.reset,
     actions,
   };
 }
