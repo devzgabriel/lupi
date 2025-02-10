@@ -1,1 +1,8 @@
-{"root":["./src/index.ts","./src/storage.ts","./src/store.ts"],"errors":true,"version":"5.7.3"}
+{
+  "root": [
+    "./src/index.ts",
+    "./src/storage.ts",
+    "./src/store.ts"
+  ],
+  "version": "5.7.3"
+}

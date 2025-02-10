@@ -1,21 +1,23 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { LupiStorage } from './storage';
 
+// Types: Rendering
 type Listener<T> = (value: T) => void;
 type Unsubscribe = () => void;
+
+// Types: Update
 type Updater<T> = (prevState: T) => T;
 type CopyWith<T> = (updater: Updater<T> | Partial<T>) => void;
+
+// Types: Validate
 type ValidatorFn<T> = (state: T) => string[];
-// type ExternalActionParams<T, A> = Parameters<A> extends [T, ...infer P] ? P : never;
-type ExternalActionParams<T, A> = Parameters<A> extends [T, ...infer P] ? P : never;
-// Parameters<A[K]> extends [T, ...infer P] ? P : never
-type InternalActionFn<T> = (state: T, ...args: any[]) => T;
 
-type ActionsDeclaration<T> = Record<string, InternalActionFn<T>>
-// TODO: Type this properly
-type ActionFn = (...args: any[]) => void;
-
-type ExternalActions<T, A> = { [K in keyof A]: (...args: ExternalActionParams<T, A[K]>) => void }
+// Types: Actions
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type ExternalActionParams = any[];
+type InternalActionFn<T> = (state: T, ...args: ExternalActionParams) => T;
+type ActionsDeclaration<T> = Record<string, InternalActionFn<T>>;
+type ActionFn = (...args: ExternalActionParams) => void;
 
 type StoreConstructorProps<T, A extends ActionsDeclaration<T>> = {
   storage: LupiStorage;
@@ -74,7 +76,6 @@ class Store<T, A extends ActionsDeclaration<T>> {
     this.listeners.add(callback);
     return () => this.listeners.delete(callback);
   }
-
   getState(): T {
     return this.state;
   }
@@ -97,7 +98,10 @@ class Store<T, A extends ActionsDeclaration<T>> {
     this.listeners.forEach((callback) => callback(this.state));
   }
 
-  async dispatch<K extends keyof A>(actionName: K, ...args: ExternalActionParams<T, A[K]>): Promise<void> {
+  async dispatch<K extends keyof A>(
+    actionName: K,
+    ...args: Parameters<A[K]> extends [T, ...infer P] ? P : never
+  ): Promise<void> {
     if (this.actions && this.actions[actionName]) {
       this.state = this.actions[actionName](this.state, ...args);
       await this._persistState();
@@ -108,7 +112,13 @@ class Store<T, A extends ActionsDeclaration<T>> {
   }
 }
 
-type StoreHookOutput<T, A extends Record<string, ActionFn>> = { state: T, copyWith: CopyWith<T>, actions: { [K in keyof A]: (...args: Parameters<A[K]> extends [T, ...infer P] ? P : never) => void } };
+type StoreHookOutput<T, A extends Record<string, ActionFn>> = {
+  state: T;
+  copyWith: CopyWith<T>;
+  actions: {
+    [K in keyof A]: (...args: Parameters<A[K]> extends [T, ...infer P] ? P : never) => void;
+  };
+};
 
 /**
  * Custom hook to manage and subscribe to a store's state.
@@ -124,7 +134,9 @@ type StoreHookOutput<T, A extends Record<string, ActionFn>> = { state: T, copyWi
  * The hook subscribes to the store and updates the component state whenever the store's state changes.
  * The updater function can either be a partial state object or a function that receives the current state and returns a new state.
  */
-function useStore<T, A extends ActionsDeclaration<T>>(store: Store<T, A>): StoreHookOutput<T, A> {
+function useStore<T, A extends Record<string, InternalActionFn<T>>>(
+  store: Store<T, A>,
+): StoreHookOutput<T, A> {
   const [value, setValue] = useState(store.getState());
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const stableSetValue = useCallback(setValue, []);
@@ -134,15 +146,19 @@ function useStore<T, A extends ActionsDeclaration<T>>(store: Store<T, A>): Store
     return unsubscribe;
   }, [store, stableSetValue]);
 
-
-
   const actions = useMemo(() => {
-    const externalActions: { [K in keyof A]: (...args: ExternalActionParams<T, A[K]>) => void } = {} as ExternalActions<T, A>;
+    const externalActions: {
+      [K in keyof A]: (...args: Parameters<A[K]> extends [T, ...infer P] ? P : never) => void;
+    } = {} as {
+      [K in keyof A]: (...args: Parameters<A[K]> extends [T, ...infer P] ? P : never) => void;
+    };
     if (store.actions) {
       for (const actionName in store.actions) {
-        externalActions[actionName] = (...args: ExternalActionParams<T, A[typeof actionName]>) => {
+        externalActions[actionName] = (
+          ...args: Parameters<A[typeof actionName]> extends [T, ...infer P] ? P : never
+        ) => {
           store.dispatch(actionName, ...args);
-        }
+        };
       }
     }
     return externalActions;
@@ -150,8 +166,11 @@ function useStore<T, A extends ActionsDeclaration<T>>(store: Store<T, A>): Store
 
   return {
     state: value,
-    copyWith: (updater) => typeof updater === 'function' ? store.update(updater as Updater<T>) : store.set(updater as Partial<T>),
-    actions
+    copyWith: (updater) =>
+      typeof updater === 'function'
+        ? store.update(updater as Updater<T>)
+        : store.set(updater as Partial<T>),
+    actions,
   };
 }
 
@@ -160,7 +179,7 @@ type CreateStoreOptions<T, A extends ActionsDeclaration<T>> = {
   actions?: A | undefined;
   encryptKey?: string;
   validators?: ValidatorFn<T>[];
-}
+};
 
 /**
  * Creates a store with the given initial state and options and return a hook to access the store.
