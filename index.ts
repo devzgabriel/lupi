@@ -1,1 +1,1 @@
-export { browserStorage, createStore } from './src';
+export { createStore, LupiStorage } from './src';

@@ -8,6 +8,7 @@ Lupi is a state management library that is designed to be as easy to use as poss
 - **Type-safe**: Lupi is written in TypeScript, so you can be sure that your store is type-safe.
 - **Persistency**: Lupi can persist your store in the browser's local storage automatically if you provide a `storageKey` option.
 - **Security**: If you provide a `encryptKey` string, Lupi will encrypt your store before saving it to the local storage.
+- **Actions**: You can define actions to modify the store and abstract the logic from the components.
 
 ## WIP Features
 
@@ -38,24 +39,24 @@ import './App.css';
 const useCounter = createStore(0);
 
 function MyChildComponent() {
-  const [counter, setCount] = useCounter();
+  const { state: counter, copyWith } = useCounter();
 
-  return <button onClick={() => setCount(counter + 1)}>count is {counter}</button>;
+  return <button onClick={() => copyWith(counter + 1)}>count is {counter}</button>;
 }
 
 function AnotherChildComponent() {
-  const [counter, setCount] = useCounter();
+  const { state: counter, copyWith } = useCounter();
 
-  return <button onClick={() => setCount(counter - 1)}>count is {counter}</button>;
+  return <button onClick={() => copyWith(counter - 1)}>count is {counter}</button>;
 }
 
 function App() {
-  const [counter] = useCounter();
+  const { state: counter } = useCounter();
 
   return (
     <div>
       <h1>Simple Counter</h1>
-      <p>Count is {counter.count}</p>
+      <p>Count is {counter}</p>
 
       <MyChildComponent />
       <AnotherChildComponent />
@@ -78,5 +79,14 @@ const useCounter = createStore(0, {
   // The key to encrypt the store, if empty, the data will be saved as plain text
   // Recommended to use if you want to save sensitive data
   encryptKey: 'my-secret-key',
+
+  actions: {
+    // You can define actions to modify the store
+    increment: (state: number) => state + 1,
+    decrement: (state: number) => state - 1,
+
+    // You can also pass a payload to the action
+    equation: (state: number, numberA: number, numberB: number) => (state * numberA) / numberB,
+  },
 });
 ```
