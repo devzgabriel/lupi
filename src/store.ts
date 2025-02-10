@@ -2,20 +2,15 @@ import { useCallback, useEffect, useState } from 'react';
 import { LupiStorage } from './storage';
 
 type Listener<T> = (value: T) => void;
+type Unsubscribe = () => void;
 type Updater<T> = (prevState: T) => T;
 type SetState<T> = (updater: Updater<T> | Partial<T>) => void;
-type Unsubscribe = () => void;
 type ValidatorFn<T> = (state: T) => string[];
 
-interface StoreOptions<T> {
-  storageKey?: string;
-  encryptKey?: string;
-  validators?: ValidatorFn<T>[];
-}
-
-interface StoreOptionsProps {
+interface StoreConstructorProps<T> {
   storageKey?: string | undefined;
   storage: LupiStorage;
+  actions?: Record<string, (state: T) => Partial<T>>;
 }
 
 class Store<T> {
@@ -26,7 +21,7 @@ class Store<T> {
   private debounceTimeout: ReturnType<typeof setTimeout> | null = null;
   private debounceDelayInMs = 300;
 
-  constructor(initialState: T, { storage, storageKey }: StoreOptionsProps) {
+  constructor(initialState: T, { storage, storageKey }: StoreConstructorProps<T>) {
     this.storage = storage;
     this.storageKey = storageKey;
     this.state = initialState;
@@ -130,6 +125,11 @@ function useStore<T>(store: Store<T>): StoreHookOutput<T> {
   ];
 }
 
+interface CreateStoreOptions<T> extends StoreConstructorProps<T> {
+  encryptKey?: string;
+  validators?: ValidatorFn<T>[];
+}
+
 /**
  * Creates a store with the given initial state and options and return a hook to access the store.
  *
@@ -139,12 +139,12 @@ function useStore<T>(store: Store<T>): StoreHookOutput<T> {
  *
  * @template T - The type of the state.
  * @param {T} initialState - The initial state of the store.
- * @param {StoreOptions<T>} [options] - Optional configuration for the store.
+ * @param {CreateStoreOptions<T>} [options] - Optional configuration for the store.
  * @returns {() => StoreHookOutput<T>} A function that returns the store hook output.
  */
 export function createStore<T>(
   initialState: T,
-  options?: StoreOptions<T>,
+  options?: CreateStoreOptions<T>,
 ): () => StoreHookOutput<T> {
   const storage = new LupiStorage(options?.encryptKey);
   const store = new Store<T>(initialState, {
