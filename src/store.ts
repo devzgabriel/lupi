@@ -15,7 +15,7 @@ type ValidatorFn<T> = (state: T) => string[];
 // Types: Actions
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type ExternalActionParams = any[];
-type InternalActionFn<T> = (state: T, ...args: ExternalActionParams) => T;
+type InternalActionFn<T> = (state: T, ...args: ExternalActionParams) => Promise<T> | T;
 type ActionsDeclaration<T> = Record<string, InternalActionFn<T>>;
 type ActionFn = (...args: ExternalActionParams) => void;
 
@@ -105,7 +105,7 @@ class Store<T, A extends ActionsDeclaration<T>> {
     ...args: Parameters<A[K]> extends [T, ...infer P] ? P : never
   ): Promise<void> {
     if (this.actions && this.actions[actionName]) {
-      this.state = this.actions[actionName](this.state, ...args);
+      this.state = await this.actions[actionName](this.state, ...args);
       await this._persistState();
       this.listeners.forEach((callback) => callback(this.state));
     } else {
