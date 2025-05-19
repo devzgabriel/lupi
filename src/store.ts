@@ -52,7 +52,6 @@ class Store<T, A extends ActionsDeclaration<T>> {
 
   private async _loadState(initialState: T): Promise<T> {
     if (!this.storageKey) return initialState;
-    console.log('Loading state from storage:', this.storage);
     if (!this.storage) {
       console.error('No storage instance available');
       return initialState;
