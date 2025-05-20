@@ -1,6 +1,6 @@
 {
   "name": "lupi",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "State management as easy as possible",
   "license": "MIT",
   "type": "module",
