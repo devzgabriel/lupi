@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { LupiStorage } from './storage';
 
 // Types: Rendering
@@ -156,12 +156,11 @@ function useStore<T, A extends Record<string, InternalActionFn<T>>>(
 	store: Store<T, A>,
 ): StoreHookOutput<T, A> {
 	const [value, setValue] = useState(store.getState());
-	const stableSetValue = useCallback(setValue, []);
 
 	useEffect(() => {
-		const unsubscribe = store.subscribe(stableSetValue);
+		const unsubscribe = store.subscribe(setValue);
 		return unsubscribe;
-	}, [store, stableSetValue]);
+	}, [store]);
 
 	const actions = useMemo(() => {
 		const externalActions: {
